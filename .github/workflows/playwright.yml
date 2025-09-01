@@ -1,27 +1,60 @@
-name: Playwright Tests
+name: Playwright Tests com rastreio
+
 on:
   push:
     branches: [ main, master ]
   pull_request:
     branches: [ main, master ]
+
 jobs:
   test:
     timeout-minutes: 60
     runs-on: ubuntu-latest
+
     steps:
-    - uses: actions/checkout@v4
-    - uses: actions/setup-node@v4
+    - name: Checkout do código
+      uses: actions/checkout@v4
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
       with:
         node-version: lts/*
-    - name: Install dependencies
+
+    - name: Instalar dependências
       run: npm ci
-    - name: Install Playwright Browsers
+
+    - name: Instalar navegadores do Playwright
       run: npx playwright install --with-deps
-    - name: Run Playwright tests
+
+    - name: Rodar testes Playwright
       run: npx playwright test
-    - uses: actions/upload-artifact@v4
+
+    - name: Mostrar rastreio do build
+      run: |
+        echo "Build: ${{ github.run_number }}"
+        echo "Data: $(date +'%Y-%m-%d %H:%M:%S')"
+        echo "Commit: ${{ github.sha }}"
+        echo "Autor: ${{ github.actor }}"
+
+    - name: Salvar rastreio em arquivo
+      run: |
+        echo "Build: ${{ github.run_number }}" > build-info.txt
+        echo "Data: $(date +'%Y-%m-%d %H:%M:%S')" >> build-info.txt
+        echo "Commit: ${{ github.sha }}" >> build-info.txt
+        echo "Autor: ${{ github.actor }}" >> build-info.txt
+
+    - name: Upload do relatório Playwright
       if: ${{ !cancelled() }}
+      uses: actions/upload-artifact@v4
       with:
         name: playwright-report
         path: playwright-report/
+        retention-days: 30
+
+    - name: Upload do rastreio
+      if: ${{ !cancelled() }}
+      uses: actions/upload-artifact@v4
+      with:
+        name: build-info
+        path: build-info.txt
         retention-days: 30
